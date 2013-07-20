@@ -29,6 +29,6 @@ while True:
 			hsv(lamps[0], 0, 0, bri, transitiontime = 1)
 			sleep(period)
 			last_bri = bri
-			if time()-start > 3.0 and not done_thunder:
+			if time()-start > 3.0:
 				play_audio("thunder.wav")
-				done_thunder = True
+				start += 8.0
