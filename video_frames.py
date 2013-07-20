@@ -7,31 +7,20 @@ import pickle
 from PIL import Image
 from StringIO import StringIO
 
-def get_frame(path, caps=gst.Caps("video/x-raw-rgb")):
-	uri = 'file://' + os.path.abspath(path)
-	#pipe = "uridecodebin uri=%s ! ffmpegcolorspace ! videoscale ! appsink name=proc_sink caps=\"%s\"" % ('file://' + os.path.abspath(path), "image/png")
-	pipe = "playbin2 uri=%s"% uri
-	print pipe
-	pipeline = gst.parse_launch(pipe)
-
-	#appsink = list(pipeline.elements())[0]
-	pipeline.props.audio_sink = gst.element_factory_make("fakesink")
-	appsink = gst.element_factory_make("appsink")
-	appsink.props.caps = caps
-	appsink.props.max_buffers = 1
-	appsink.props.emit_signals = True
-	appsink.connect('new-buffer', new_buffer)
-	pipeline.props.video_sink = appsink
-	return pipeline
-
 pixels = []
 
 def append_struct(name, value, aggregate):
 	aggregate[name] = value
 	return True
 
-def new_buffer(appsink):
+def pixel_storage(currentPixels, pipeline):
 	global pixels
+	pixels.append(currentPixels)
+	print len(pixels)
+	if len(pixels)>200:
+		pipeline.set_state(gst.STATE_PAUSED)
+
+def new_buffer(appsink, pixel_func = pixel_storage):
 	buf = appsink.emit('pull-buffer')#,gst.Caps("image/png"))
 	caps = buf.get_caps()
 	items = {}
@@ -44,10 +33,24 @@ def new_buffer(appsink):
 	locs = [(w/3.0, h/3.0), (w*(2/3.0), h/3.0), (w*(2/3.0), h*(2/3.0)), (w/3.0, h*(2/3.0))]
 	locs = [(int(a), int(b)) for (a,b) in locs]
 	currentPixels = [img.getpixel(loc) for loc in locs]
-	pixels.append(currentPixels)
-	print len(pixels)
-	if len(pixels)>200:
-		pipeline.set_state(gst.STATE_PAUSED)
+	pixel_func(currentPixels, pipeline)
+
+def build_pipeline(path, caps=gst.Caps("video/x-raw-rgb"), pixel_func = pixel_storage):
+	uri = 'file://' + os.path.abspath(path)
+	#pipe = "uridecodebin uri=%s ! ffmpegcolorspace ! videoscale ! appsink name=proc_sink caps=\"%s\"" % ('file://' + os.path.abspath(path), "image/png")
+	pipe = "playbin2 uri=%s"% uri
+	print pipe
+	pipeline = gst.parse_launch(pipe)
+
+	#appsink = list(pipeline.elements())[0]
+	pipeline.props.audio_sink = gst.element_factory_make("fakesink")
+	appsink = gst.element_factory_make("appsink")
+	appsink.props.caps = caps
+	appsink.props.max_buffers = 1
+	appsink.props.emit_signals = True
+	appsink.connect('new-buffer', new_buffer, pixel_func)
+	pipeline.props.video_sink = appsink
+	return pipeline
 
 def on_msg(msg):
 	if msg.type == gst.MESSAGE_ERROR:
@@ -65,23 +68,23 @@ def on_msg(msg):
 
 pipeline = None
 
+def run_pipeline(video_file, pixel_func = pixel_storage):
+	global pipeline
+	pipeline = build_pipeline(video_file, pixel_func = pixel_func)
+	bus = pipeline.get_bus()
+	pipeline.set_state(gst.STATE_PLAYING)
+	pipeline.get_state()
+	while True:
+		msg = bus.poll(gst.MESSAGE_ANY, -1)
+		ret = on_msg(msg)
+		if ret == False:
+			break
+
 def main():
+	global pixels
 	pixel_file = sys.argv[1] + ".pixels"
 	if not exists(pixel_file):
-		global pipeline, pixels
-		pipeline = get_frame(sys.argv[1])
-
-		print list(pipeline.elements())
-
-		bus = pipeline.get_bus()
-		pipeline.set_state(gst.STATE_PLAYING)
-		pipeline.get_state()
-		while True:
-			msg = bus.poll(gst.MESSAGE_ANY, -1)
-			ret = on_msg(msg)
-			if ret == False:
-				break
-
+		run_pipeline(sys.argv[1])
 		print pixels
 		pickle.dump(pixels, open(pixel_file, "w"))
 
