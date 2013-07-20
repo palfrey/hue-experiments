@@ -8,7 +8,8 @@ lamps = [int(x) for x in argv[2:]]
 if len(lamps) == 0:
 	raise Exception, "need some lamps"
 
-def new_storage(currentPixels, pipeline):
+def new_storage(image, pipeline):
+	currentPixels = get_pixels(image)
 	for i, lamp in enumerate(lamps):
 		(x,y,z) = currentPixels[i]
 		rgb(lamp, x, y, z, transitiontime = 1)

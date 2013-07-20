@@ -13,12 +13,18 @@ def append_struct(name, value, aggregate):
 	aggregate[name] = value
 	return True
 
-def pixel_storage(currentPixels, pipeline):
+def pixel_storage(image, pipeline):
 	global pixels
-	pixels.append(currentPixels)
+	pixels.append(get_pixels(image))
 	print len(pixels)
 	if len(pixels)>200:
-		pipeline.set_state(gst.STATE_PAUSED)
+		return False
+
+def get_pixels(img, pipeline):
+	(w, h) = img.size
+	locs = [(w/3.0, h/3.0), (w*(2/3.0), h/3.0), (w*(2/3.0), h*(2/3.0)), (w/3.0, h*(2/3.0))]
+	locs = [(int(a), int(b)) for (a,b) in locs]
+	return [img.getpixel(loc) for loc in locs]
 
 def new_buffer(appsink, pixel_func = pixel_storage):
 	buf = appsink.emit('pull-buffer')#,gst.Caps("image/png"))
@@ -28,12 +34,10 @@ def new_buffer(appsink, pixel_func = pixel_storage):
 		struct = caps.get_structure(i)
 		for x in range(struct.n_fields()):
 			struct.foreach(append_struct, items)
-	img = Image.fromstring("RGB",(items["width"], items["height"]) , str(buf))
-	(w, h) = img.size
-	locs = [(w/3.0, h/3.0), (w*(2/3.0), h/3.0), (w*(2/3.0), h*(2/3.0)), (w/3.0, h*(2/3.0))]
-	locs = [(int(a), int(b)) for (a,b) in locs]
-	currentPixels = [img.getpixel(loc) for loc in locs]
-	pixel_func(currentPixels, pipeline)
+	img = Image.fromstring("RGB",(items["width"], items["height"]), str(buf))
+	ret = pixel_func(img, pipeline)
+	if ret == False:
+		pipeline.set_state(gst.STATE_PAUSED)
 
 def build_pipeline(path, caps=gst.Caps("video/x-raw-rgb"), pixel_func = pixel_storage):
 	uri = 'file://' + os.path.abspath(path)
