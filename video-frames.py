@@ -40,8 +40,11 @@ def new_buffer(appsink):
 		for x in range(struct.n_fields()):
 			struct.foreach(append_struct, items)
 	img = Image.fromstring("RGB",(items["width"], items["height"]) , str(buf))
-	loc = tuple([int(x/2.0) for x in img.size])
-	pixels.append(img.getpixel(loc))
+	(w, h) = img.size
+	locs = [(w/3.0, h/3.0), (w*(2/3.0), h/3.0), (w*(2/3.0), h*(2/3.0)), (w/3.0, h*(2/3.0))]
+	locs = [(int(a), int(b)) for (a,b) in locs]
+	currentPixels = [img.getpixel(loc) for loc in locs]
+	pixels.append(currentPixels)
 	print len(pixels)
 	if len(pixels)>200:
 		pipeline.set_state(gst.STATE_PAUSED)
