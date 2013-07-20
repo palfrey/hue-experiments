@@ -43,7 +43,7 @@ def new_buffer(appsink):
 	loc = tuple([int(x/2.0) for x in img.size])
 	pixels.append(img.getpixel(loc))
 	print len(pixels)
-	if len(pixels)>50:
+	if len(pixels)>200:
 		pipeline.set_state(gst.STATE_PAUSED)
 
 def on_msg(msg):
