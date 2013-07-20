@@ -63,6 +63,7 @@ def on_msg(msg):
 	elif msg.type == gst.MESSAGE_EOS:
 		duration = pipeline.query_duration(gst.FORMAT_TIME)
 		print 'Duration', duration
+		return False
 	elif msg.type == gst.MESSAGE_STATE_CHANGED:
 		(old, new, pending) = msg.parse_state_changed()
 		if old == gst.STATE_PLAYING and new == gst.STATE_PAUSED:
