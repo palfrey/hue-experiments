@@ -1,22 +1,17 @@
 from hue import *
 from time import sleep
 
-def cylon(light, start = 0):
-	while True:
-		for i in range (start, 255, 20):
-			rgb(light, i, 0, 0)
-			yield None
-		for i in range (255, 0, -20):
-			rgb(light, i, 0, 0)
-			yield None
-
-cylons = [
-		cylon(3),
-		cylon(2, 128),
-		cylon(1, 255)
-		]
+def cylon(i):
+	for lamp in range(1,4):
+		diff = abs(lamp-i)
+		value = 255 - (diff*255)
+		print lamp, i, diff, value
+		rgb(lamp, value, 0, 0)
+	sleep(.2)
 
 while True:
-	for c in cylons:
-		c.next()
-	sleep(.2)
+	diff = .2
+	for i in frange(1.0, 3.0, diff):
+		cylon(i)
+	for i in frange(3.0, 1, -diff):
+		cylon(i)

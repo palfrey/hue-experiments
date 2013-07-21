@@ -12,9 +12,14 @@ def lights():
 	return lights
 
 def frange(start, stop, step):
-    while start < stop:
-        yield start
-        start += step
+	if step < 0:
+		while start > stop:
+			yield start
+			start += step
+	else:
+		while start < stop:
+			yield start
+			start += step
 
 def set_state(light, state):
 	path = base + "/lights/%s/state" % light
