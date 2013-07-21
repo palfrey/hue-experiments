@@ -15,7 +15,7 @@ def append_struct(name, value, aggregate):
 
 def pixel_storage(image, pipeline):
 	global pixels
-	pixels.append(get_pixels(image))
+	pixels.append(get_pixels(image, pipeline))
 	print len(pixels)
 	if len(pixels)>200:
 		return False
