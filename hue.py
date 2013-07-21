@@ -83,3 +83,6 @@ def hsv(light, h, s, v, transitiontime = 1):
 		v = int(v*254)
 	print h,s,v
 	return set_state(light, {"hue": h, "sat": s, "bri": v, "transitiontime": transitiontime, "on": True})
+
+def off(light):
+	return set_state(light, {"on": False})

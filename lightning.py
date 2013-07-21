@@ -12,6 +12,9 @@ lamps = [int(x) for x in argv[2:]]
 if len(lamps) == 0:
 	raise Exception, "need some lamps"
 
+for other in [x for x in lights() if x not in lamps]:
+	off(other)
+
 highest = max(x[0] for x in pixels)
 print highest
 
@@ -26,7 +29,8 @@ while True:
 		mod_bri = int(bri * 10)
 		if mod_bri > 0 and bri != last_bri:
 			print "bri", bri, count, highest
-			hsv(lamps[0], 0, 0, bri, transitiontime = 1)
+			for lamp in lamps:
+				hsv(lamp, 0, 0, bri, transitiontime = 1)
 			sleep(period)
 			last_bri = bri
 			if time()-start > 3.0:
